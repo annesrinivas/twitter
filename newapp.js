@@ -36,26 +36,25 @@ app.get('/', function (req,res){
 });
 
 var twit=new twitter(config.twitter);
-
-app.get('/status', function (req, res) {
-    twit.verifyCredentials(function (error, data) {
-        res.send("Hello,"  + data.name + "</br> </br></br> Tweets saved since server start:"+tweetsSaved);
-       
-    });
-});
+var users=[];
 
 //Create web sockets connection.
 io.sockets.on('connection', function (socket) {
+  
+   // The user it's added to the array if it doesn't exist
+    if(users.indexOf(socket.id) === -1) {
+        users.push(socket.id);
+         console.log('new client connected');
+    }  
     
-  console.log('new client connected');
+  // Log
+  logConnectedUsers();
 
   socket.on('start tweets', function() {
       
     if(stream === null) {
         
-      console.log('starting tweets');
-      
-      
+      console.log('Staream is null. starting tweets');
       //Connect to twitter stream passing in filter a box between NY and SF
       twit.stream('statuses/filter', {'locations':'-122.75,36.8,-121.75,37.8,-74,40,-73,41'}, function(stream) {
               stream.on('data', function(data) {
@@ -63,30 +62,22 @@ io.sockets.on('connection', function (socket) {
                                                    saveTweet(data);
                                                    //Update counter
                                                    tweetsSaved++;
-                                                                                                  
                                                    // Update the console every 50 analyzed tweets
                                                     if (tweetsSaved % 50 === 0) {
                                                         console.log("Tweet #" + tweetsSaved );
                                                     }
+                                                    
+                                                    if(users.length > 0) {
                                                     //Send out to web sockets channel.
                                                     socket.emit('twitter-stream', data);
-                                                    
-                                                    if (data.coordinates){
-                                                                        if (data.coordinates !== null){
-                                                                        //If so then build up some nice json and send out to web sockets
-                                                                        var outputPoint = {"lat": data.coordinates.coordinates[0],"lng": data.coordinates.coordinates[1]};
-                                                                        //Send out to web sockets channel.
-                                                                        //console.log('Found a tweet in' + data.coordinates.coordinates[0] + data.coordinates.coordinates[1]);
-                                                                        }};
-
-                                                    if(data.place){
-                                                                  //  console.log('Found a tweet that has ' + data.place.bounding_box.type);  
-                                                                    if(data.place.bounding_box.type === 'Polygon')
-                                                                    {
-                                                                    //    console.log('got ply');
-                                                                    }
-                                                                    
-                                                                };
+                                                    }
+                                                    else {
+                                                            // Stop if there are no users
+                                                            console.log('destoying stream');
+                                                            stream.destroy();
+                                                            stream = null;
+                                                        }
+                                    
               });
               stream.on('limit', function(limitMessage) {
                 return console.log(limitMessage);
@@ -99,6 +90,12 @@ io.sockets.on('connection', function (socket) {
               stream.on('disconnect', function(disconnectMessage) {
                 return console.log(disconnectMessage);
               });
+              
+             stream.on('error', function(error) {
+		     console.log("Error with stream" + error);
+              
+	       })
+    
       });
     }
   });
@@ -108,14 +105,29 @@ io.sockets.on('connection', function (socket) {
      socket.emit('connected');
      console.log('new client connected');
      
-    
-     socket.on('disconnect', function () {
-     console.log('a client disconnecte');
+    // This handles when a user is disconnected
+    socket.on("disconnect", function(o) {
+        // find the user in the array
+        var index = users.indexOf(socket.id);
+        if(index != -1) {
+            // Eliminates the user from the array
+            users.splice(index, 1);
+        }
+        logConnectedUsers();
+        console.log("user disconnected");
+    });
   });
   
-});
 
 
+
+
+  // A log function for debugging purposes
+function logConnectedUsers() {
+    console.log("============= CONNECTED USERS ==============");
+    console.log("==  ::  " + users.length);
+    console.log("============================================");
+}
 
 
 
