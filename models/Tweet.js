@@ -9,10 +9,15 @@ var schema = new mongoose.Schema({
     body       : String,
     date       : Date,
     screenname : String,
-  //  loc: {
-  //         type: [Number],  // [<longitude>, <latitude>]
-  //         index: '2d'      // create the geospatial index
-  //  }
+   // loc: [
+     //      Number, Number
+   //        index: '2d'      // create the geospatial index
+   // ]
+   
+    loc: {  
+            type: [Number]
+    } 
+
         
 });
 

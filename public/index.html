@@ -2,11 +2,41 @@
      
  <script src="/socket.io/socket.io.js"></script>
  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js"></script>
-  <script>
+ <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
+ <style>
+ html, body, input, select, textarea
+          {
+                font-size: 1.05em;
+          }
+ </style>
+          
+
+<body>
+    
+    <p>Click the button to get your coordinates.</p>
+
+<button onclick="getLocation()">Try It</button>
+
+<script>
+var x = document.getElementById("demo");
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition);
+    } else {
+        x.innerHTML = "Geolocation is not supported by this browser.";
+    }
+}
+function showPosition(position) {
+    x.innerHTML = "Latitude: " + position.coords.latitude + 
+    "<br>Longitude: " + position.coords.longitude; 
+}
+
     // Create SocketIO instance, connect
 
     var socket = io.connect()
     socket.connect('http://127.0.0.1'); 
+    
+    var count=0;
 
     // Add a connect listener
     socket.on('connect',function() {
@@ -18,8 +48,9 @@
     
     // Add a connect listener
     socket.on('twitter-stream',function(data) {
-          $('#tweetd').append(data['text']+'<br>');
-          console.log('Received a tweet from the server!',data);
+          $('#tweetd').prepend(data['text']+'<br>');
+          $(".content .badge").html(count++);
+      
         });
    
    
@@ -30,8 +61,17 @@
 
     
 </script>
-<h1> All tweets from NYC to SF. Sample of Live tweets  </h1>
-<div id="tweetd"></div>
-</div>
+<h1> <div class="content"> 
+    All tweets from NYC to SF. Sample of Live tweets. 
+    <button class="btn btn-primary" type="button">
+    Tweets captured so far <span class="badge"> </span>
+    </button>
+    <span class='value'></span>
+    </div> 
+</h1>
 
+    
+<div  class="list-group" id="tweetd"></div>
+</div>
+</body>
 </html>

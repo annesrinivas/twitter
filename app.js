@@ -12,7 +12,7 @@ var tweetsSaved=0;
 var stream=null;
 var mongoose=require('mongoose');
 
-var mongoUrl='mongodb://localhost/newtweets';
+var mongoUrl='mongodb://localhost/newtweetsmarch';
 
 
 // Use connect method to connect to the Server
@@ -70,8 +70,24 @@ io.sockets.on('connection', function (socket) {
                                                     }
                                                     //Send out to web sockets channel.
                                                     socket.emit('twitter-stream', data);
-                                                    }
-                                                );
+                                                    
+                                                    if (data.coordinates){
+                                                                        if (data.coordinates !== null){
+                                                                        //If so then build up some nice json and send out to web sockets
+                                                                        var outputPoint = {"lat": data.coordinates.coordinates[0],"lng": data.coordinates.coordinates[1]};
+                                                                        //Send out to web sockets channel.
+                                                                        //console.log('Found a tweet in' + data.coordinates.coordinates[0] + data.coordinates.coordinates[1]);
+                                                                        }};
+
+                                                    if(data.place){
+                                                                  //  console.log('Found a tweet that has ' + data.place.bounding_box.type);  
+                                                                    if(data.place.bounding_box.type === 'Polygon')
+                                                                    {
+                                                                    //    console.log('got ply');
+                                                                    }
+                                                                    
+                                                                };
+              });
               stream.on('limit', function(limitMessage) {
                 return console.log(limitMessage);
               });
